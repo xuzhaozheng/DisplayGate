@@ -32,38 +32,23 @@ let gradient = NSGradient(
 )!
 gradient.draw(in: tile, angle: -90)
 
-func roundedScreen(_ rect: NSRect, radius: CGFloat, lineWidth: CGFloat) {
-    let screen = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
-    screen.lineWidth = lineWidth
-    screen.lineJoinStyle = .round
-    screen.stroke()
+let symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 430, weight: .medium)
+    .applying(NSImage.SymbolConfiguration(hierarchicalColor: .white))
+guard let symbol = NSImage(systemSymbolName: "display.2", accessibilityDescription: "DisplayGate")?
+    .withSymbolConfiguration(symbolConfiguration) else {
+    fatalError("Unable to load display.2 SF Symbol")
 }
 
-NSColor.white.setStroke()
-
-// Original dual-display drawing. It intentionally uses ordinary geometry
-// rather than an exported or rasterized SF Symbol.
-roundedScreen(NSRect(x: 180, y: 395, width: 440, height: 285), radius: 42, lineWidth: 38)
-
-let backStand = NSBezierPath()
-backStand.lineWidth = 38
-backStand.lineCapStyle = .round
-backStand.move(to: NSPoint(x: 400, y: 395))
-backStand.line(to: NSPoint(x: 400, y: 330))
-backStand.move(to: NSPoint(x: 330, y: 330))
-backStand.line(to: NSPoint(x: 470, y: 330))
-backStand.stroke()
-
-roundedScreen(NSRect(x: 430, y: 285, width: 410, height: 285), radius: 42, lineWidth: 38)
-
-let frontStand = NSBezierPath()
-frontStand.lineWidth = 38
-frontStand.lineCapStyle = .round
-frontStand.move(to: NSPoint(x: 635, y: 285))
-frontStand.line(to: NSPoint(x: 635, y: 220))
-frontStand.move(to: NSPoint(x: 565, y: 220))
-frontStand.line(to: NSPoint(x: 705, y: 220))
-frontStand.stroke()
+let symbolSize = symbol.size
+let scale = min(650 / symbolSize.width, 480 / symbolSize.height)
+let drawSize = NSSize(width: symbolSize.width * scale, height: symbolSize.height * scale)
+let drawRect = NSRect(
+    x: (CGFloat(size) - drawSize.width) / 2,
+    y: (CGFloat(size) - drawSize.height) / 2,
+    width: drawSize.width,
+    height: drawSize.height
+)
+symbol.draw(in: drawRect)
 
 NSGraphicsContext.restoreGraphicsState()
 
