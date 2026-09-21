@@ -116,3 +116,16 @@ The implementation was informed by public work documenting the same private disp
 - [Lunar: Turn off MacBook display in clamshell mode](https://alinpanaitiu.com/blog/turn-off-macbook-display-clamshell/)
 
 These projects are references and are not runtime dependencies.
+
+## Versioning
+
+Application version metadata is maintained in `Resources/Info.plist`:
+
+- `CFBundleShortVersionString` is the user-facing release version.
+- `CFBundleVersion` is the internal build number.
+
+The version is visible in Finder's Get Info panel and other macOS bundle metadata views. DisplayGate does not currently show it in the menu bar UI, and `displayctl` does not currently provide a `--version` command. Git release tags should use the same release version with a `v` prefix, for example `v1.0`.
+
+## License
+
+DisplayGate is available under the [MIT License](LICENSE).
