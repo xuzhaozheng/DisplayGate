@@ -64,12 +64,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func makeDetailsMenu() -> NSMenu {
         let menu = NSMenu()
-        menu.addItem(infoItem(label: "外接显示器", value: nil, emphasized: true))
+        menu.addItem(infoItem(label: "显示器", value: nil, emphasized: true))
         menu.addItem(.separator())
         do {
-            let displays = try controller.externalDisplays()
+            let displays = try controller.controllableDisplays()
+            let externalDisplays = displays.filter { !$0.builtIn }
             if displays.isEmpty {
-                menu.addItem(infoItem(label: "没有可控制的外接显示器", value: nil))
+                menu.addItem(infoItem(label: "没有可用的显示器", value: nil))
+            }
+            let hasActiveMirrorSet = displays.contains {
+                $0.active && $0.mirrored
             }
             for d in displays {
                 let state = d.enabled ? "已启用" : "已停用"
@@ -89,10 +93,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 displayItem.state = d.enabled ? .on : .off
                 displayItem.submenu = displayMenu(for: d)
                 menu.addItem(displayItem)
+
+                let isMain = d.main
+                let setMain = NSMenuItem(
+                    title: isMain ? "当前主显示器" : "设为主显示器",
+                    action: isMain ? nil : #selector(setMainDisplay(_:)),
+                    keyEquivalent: ""
+                )
+                setMain.target = self
+                setMain.representedObject = NSNumber(value: d.id)
+                setMain.indentationLevel = 1
+                setMain.state = isMain ? .on : .off
+                setMain.isEnabled = !isMain && d.active && !hasActiveMirrorSet
+                menu.addItem(setMain)
             }
-            if !displays.isEmpty {
+            if !externalDisplays.isEmpty {
                 menu.addItem(.separator())
-                let allEnabled = displays.allSatisfy(\.enabled)
+                let allEnabled = externalDisplays.allSatisfy(\.enabled)
                 let toggle = NSMenuItem(
                     title: allEnabled ? "停用全部外接显示器" : "启用全部外接显示器",
                     action: #selector(toggleAll),
@@ -113,14 +130,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let screen = screen(for: display.id)
         let mode = CGDisplayCopyDisplayMode(display.id)
         let menu = NSMenu(title: displayName(for: display))
-        let toggle = NSMenuItem(
-            title: display.enabled ? "停用此显示器" : "启用此显示器",
-            action: #selector(toggleDisplay(_:)),
-            keyEquivalent: ""
-        )
-        toggle.target = self
-        toggle.representedObject = NSNumber(value: display.id)
-        menu.addItem(toggle)
+        if display.builtIn {
+            let protected = NSMenuItem(title: "内建显示器不可停用", action: nil, keyEquivalent: "")
+            protected.isEnabled = false
+            menu.addItem(protected)
+        } else {
+            let toggle = NSMenuItem(
+                title: display.enabled ? "停用此显示器" : "启用此显示器",
+                action: #selector(toggleDisplay(_:)),
+                keyEquivalent: ""
+            )
+            toggle.target = self
+            toggle.representedObject = NSNumber(value: display.id)
+            menu.addItem(toggle)
+        }
         menu.addItem(.separator())
         menu.addItem(infoItem(label: "状态", value: display.enabled ? "已启用" : "已停用", emphasized: true))
         if let mode {
@@ -200,7 +223,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func displayName(for display: DisplayInfo) -> String {
-        screen(for: display.id)?.localizedName ?? display.name
+        if display.builtIn { return "内建显示器" }
+        return screen(for: display.id)?.localizedName ?? display.name
     }
 
     private func uuidString(for displayID: CGDirectDisplayID) -> String {
@@ -264,6 +288,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 throw DisplayError.notFound(String(displayID))
             }
             try controller.setEnabled(!display.enabled, for: display)
+            updateStatusIcon()
+        } catch {
+            showError(error)
+        }
+    }
+
+    @objc private func setMainDisplay(_ sender: NSMenuItem) {
+        guard let displayID = (sender.representedObject as? NSNumber)?.uint32Value else { return }
+        do {
+            guard let display = try controller.controllableDisplays().first(where: { $0.id == displayID }) else {
+                throw DisplayError.notFound(String(displayID))
+            }
+            try controller.setMainDisplay(display)
             updateStatusIcon()
         } catch {
             showError(error)

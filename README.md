@@ -1,16 +1,17 @@
 # DisplayGate
 
-DisplayGate is a small macOS menu bar app for disconnecting and reconnecting external displays in software. It also includes a command line tool named `displayctl`.
+DisplayGate is a small macOS menu bar app for managing external-display connections and choosing the main display. It also includes a command line tool named `displayctl`.
 
 The project uses undocumented SkyLight functions because macOS does not provide a public API for this operation. It is intended for personal use, experimentation, and development workflows.
 
 ## Features
 
-- List connected and software-disabled displays.
+- List the built-in display and connected or software-disabled external displays.
 - Disconnect, reconnect, or toggle one external display.
 - Toggle all controllable external displays from the menu bar.
+- Make any active display, including the built-in display, the main display.
 - Show display mode, position, color, HDR/EDR, hardware identifiers, and other diagnostics.
-- Refuse to control the built-in display.
+- Refuse to enable or disable the built-in display.
 - Refuse operations that would disable the last active display.
 
 ## Requirements
@@ -42,6 +43,13 @@ The generated application stays under `.build/` and is not part of the source re
 - Right click: toggle all external displays.
 - Middle click: toggle all external displays.
 
+Each display, including the built-in display, has an indented action in the
+display list for making that active display the main display. The action is
+unavailable for disabled or already-main displays, and while display mirroring
+is active. The built-in display can become the main display but cannot be
+disabled through DisplayGate. It is labeled `内建显示器` in the menu to keep
+the menu compact and consistent with the Chinese interface.
+
 The status item and application icon use the `display.2` SF Symbol. The application icon under `Assets/` can be regenerated with `Tools/make_displaygate_icon.swift`.
 
 ## Build and use the CLI
@@ -59,10 +67,11 @@ displayctl inspect
 displayctl disconnect <id|name>
 displayctl reconnect <id|name>
 displayctl toggle <id|name>
+displayctl set-main <id|name>
 displayctl toggle-all
 ```
 
-Name matching is case-insensitive and must produce a unique match. A numeric display ID can be used when names are ambiguous.
+Name matching is case-insensitive and must produce a unique match. A numeric display ID can be used when names are ambiguous. `set-main` accepts the built-in display; connection commands continue to reject it.
 
 ## How it works
 
@@ -74,6 +83,11 @@ DisplayGate starts a normal CoreGraphics display configuration transaction and c
 | `SLSGetDisplayList` | Enumerate displays, including displays disabled in software |
 
 `CGGetOnlineDisplayList` and `CGGetActiveDisplayList` no longer include a display after it is disabled. `SLSGetDisplayList` is therefore required to find it again for reconnection.
+
+Making an active display the main display uses the public
+`CGConfigureDisplayOrigin` API. DisplayGate translates every active display in
+one transaction so that the selected display has origin `(0, 0)` while the
+relative arrangement is preserved. The change has login-session scope.
 
 The private symbols are loaded with `dlopen` and `dlsym`. If they are unavailable, read-only display listing falls back to public CoreGraphics lists and state-changing operations fail with an error.
 

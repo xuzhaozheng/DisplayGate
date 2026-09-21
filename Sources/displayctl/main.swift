@@ -4,7 +4,7 @@ import CoreGraphics
 import DisplayCore
 
 let controller = DisplayController()
-func usage() -> String { "Usage: displayctl list | inspect | disconnect <id|name> | reconnect <id|name> | toggle <id|name> | toggle-all" }
+func usage() -> String { "Usage: displayctl list | inspect | disconnect <id|name> | reconnect <id|name> | toggle <id|name> | set-main <id|name> | toggle-all" }
 
 func yesNo(_ value: Bool) -> String { value ? "yes" : "no" }
 func rectText(_ rect: CGRect) -> String {
@@ -36,9 +36,9 @@ func printInspection() throws {
         print("  online: \(yesNo(d.online))")
         print("  active: \(yesNo(d.active))")
         print("  enabled: \(yesNo(d.enabled))")
-        print("  main: \(yesNo(CGDisplayIsMain(d.id) != 0))")
+        print("  main: \(yesNo(d.main))")
         print("  asleep: \(yesNo(CGDisplayIsAsleep(d.id) != 0))")
-        print("  inMirrorSet: \(yesNo(CGDisplayIsInMirrorSet(d.id) != 0))")
+        print("  inMirrorSet: \(yesNo(d.mirrored))")
         print("  mirrorSourceID: \(mirrorSource == kCGNullDirectDisplay ? "none" : String(mirrorSource))")
         print("  rotationDegrees: \(CGDisplayRotation(d.id))")
         print("  bounds: \(rectText(bounds))")
@@ -98,6 +98,11 @@ do {
         let d = try controller.resolve(args[1])
         try controller.setEnabled(command == "reconnect" ? true : command == "disconnect" ? false : !d.enabled, for: d)
         print("OK: \(command) \(d.name) (\(d.id))")
+    case "set-main":
+        guard args.count == 2 else { throw DisplayError.operationFailed(usage()) }
+        let d = try controller.resolve(args[1])
+        try controller.setMainDisplay(d)
+        print("OK: set-main \(d.name) (\(d.id))")
     case "toggle-all":
         guard args.count == 1 else { throw DisplayError.operationFailed(usage()) }
         try controller.toggleAllExternal()
