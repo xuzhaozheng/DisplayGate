@@ -95,14 +95,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 menu.addItem(displayItem)
 
                 let isMain = d.main
+                let mainTitle = isMain ? "当前主显示器" : "设为主显示器"
                 let setMain = NSMenuItem(
-                    title: isMain ? "当前主显示器" : "设为主显示器",
+                    title: mainTitle,
                     action: isMain ? nil : #selector(setMainDisplay(_:)),
                     keyEquivalent: ""
                 )
                 setMain.target = self
                 setMain.representedObject = NSNumber(value: d.id)
-                setMain.indentationLevel = 1
                 setMain.state = isMain ? .on : .off
                 setMain.isEnabled = !isMain && d.active && !hasActiveMirrorSet
                 menu.addItem(setMain)
