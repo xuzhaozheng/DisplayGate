@@ -22,9 +22,9 @@ NSColor.clear.setFill()
 NSRect(x: 0, y: 0, width: size, height: size).fill()
 
 let tile = NSBezierPath(
-    roundedRect: NSRect(x: 72, y: 72, width: 880, height: 880),
-    xRadius: 205,
-    yRadius: 205
+    roundedRect: NSRect(x: 0, y: 0, width: size, height: size),
+    xRadius: 238,
+    yRadius: 238
 )
 let gradient = NSGradient(
     starting: NSColor(calibratedRed: 0.08, green: 0.55, blue: 1.0, alpha: 1),
@@ -40,7 +40,7 @@ guard let symbol = NSImage(systemSymbolName: "display.2", accessibilityDescripti
 }
 
 let symbolSize = symbol.size
-let scale = min(650 / symbolSize.width, 480 / symbolSize.height)
+let scale = min(756 / symbolSize.width, 559 / symbolSize.height)
 let drawSize = NSSize(width: symbolSize.width * scale, height: symbolSize.height * scale)
 let drawRect = NSRect(
     x: (CGFloat(size) - drawSize.width) / 2,

@@ -50,7 +50,7 @@ is active. The built-in display can become the main display but cannot be
 disabled through DisplayGate. It is labeled `内建显示器` in the menu to keep
 the menu compact and consistent with the Chinese interface.
 
-The status item and application icon use the `display.2` SF Symbol. The application icon under `Assets/` can be regenerated with `Tools/make_displaygate_icon.swift`.
+The status item and application icon use the `display.2` SF Symbol. The application icon under `Assets/` can be regenerated with `./Tools/make_displaygate_icns.sh`, which rebuilds both the 1024px source PNG and the ICNS (full-bleed tile, modern PNG entries for every size).
 
 ## Build and use the CLI
 
